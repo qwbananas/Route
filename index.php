@@ -5,14 +5,7 @@
  * 定义分发路由
  */
 include "config/config.php";
-include "lib/functions.php";
-include "lib/db.php";
-include "Route.php";
 
-get("/index", "test@result");
+get("/index/{username}/user/{userid}", "test@test");
 
-get('/user', "test@getuser");
-
-get('/pub', "test@ecrypt_test");
-
-get('/db', "test@db_test");
+get("/user/(.*?)/(.*?)", "test@test2");

@@ -128,16 +128,44 @@
 			if($type === AJAX) {
 				$Route -> sMethod = isset($_SERVER['HTTP_X_REQUESTED_WITH']) ? $_SERVER['HTTP_X_REQUESTED_WITH'] : 'GET';
 			}
+			//处理路由:判断是否有大括号，如果有大括号则代表有确定key的参数
+			$count_1 = substr_count($route, "{");
+			if($count_1 > 0) {
+				//得到每个参数的key
+				$arr_1 = getCharpos($route, "{");
+				$arr_2 = getCharpos($route, "}");
+				$param_key = array();
+				$str = "(.*?)";
+				$count = count($arr_1);
+				for($i = 0; $i < $count; $i ++) {
+					$param_key[$i] = substr($route, ($arr_1[$i] + 1), ($arr_2[$i] - $arr_1[$i] - 1));
+				}
+				//替换route
+				for($i = 0; $i < $count; $i ++) {
+					$po_1 = strpos($route, "{");
+					$po_2 = strpos($route, "}");
+					$route = substr_replace($route, $str, $po_1, ($po_2 - $po_1 + 1));
+				}
+			}
 			if(static::$foundRoute || (!preg_match('@^'.$route.'(?:\.(\w+))?$@uD', $Route->URI, $matches) || $Route->sMethod != $type)) {
 				return FALSE;
 			}
 
 			static::$foundRoute = TRUE;
-			//处理路由
+			//没有大括号的情况
 			$route = '/^' . str_replace('/', '\/', $route) . '$/';
-			if(preg_match($route, $Route->URI, $params)) {
+			if(preg_match($route, $Route -> URI, $params)) {
 				if($Route -> sMethod == "GET" || $Route -> sMethod == "PUT" ||$Route -> sMethod == "DELETE") {
-					$_GET = $params;
+					if(isset($param_key)) {
+						for($i = 0; $i < count($param_key); $i ++) {
+							$_GET[$param_key[$i]] = $params[$i + 1];
+						}
+					} else {
+						$count = count($params) - 1;
+						for($i = 0; $i < $count; $i ++) {
+							$_GET[$i] = $params[$i+1];
+						}
+					}
 				}
 				$routeParams = [$Route];
 				$routeParams = $routeParams + $params;
